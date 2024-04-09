@@ -1,0 +1,46 @@
+version: "3"
+services:
+  database:
+    restart: always
+    image: postgres:10.8-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: cc-monitoring
+    ports:
+      - "4200:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  api:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flask-api
+    environment:
+      KUBE_HOST:
+      KUBE_TOKEN:
+      KUBE_CERT:
+      FLASK_APP_SECRET:
+      FLASK_APP_SALT:
+      FLASK_VERIFY_SALT:
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
+      FLASK_ENV: development
+      DATABASE_USER: postgres
+      DATABASE_URI: ${DATABASE_URI:-postgresql://postgres:postgres@database:5432/monitor}
+      TEST_DATABASE_URI: ${TEST_DATABASE_URI:-postgresql://postgres:postgres@database:5432/monitor_test}
+      FLASK_APP: server.py
+    ports:
+      - "${FLASK_PORT:-50000}:50000"
+    volumes:
+      - .:/app
+    depends_on:
+      - database
+    links:
+      - database
+
+  
+volumes:
+  db-data:
