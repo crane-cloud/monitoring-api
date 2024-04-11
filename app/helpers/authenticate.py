@@ -17,12 +17,12 @@ def jwt_required(fn):
         payload : object = {}
 
         if access_token is None :
-            return jsonify({'message': 'Access token was not supplied'}), 401
+            return dict(message = 'Access token was not supplied'), 401
 
         try :
             token = access_token.split(' ')[1]
             if (access_token.split(' ')[0] != "Bearer"):
-                return jsonify({'message' : "Bad Authorization header. Expected value 'Bearer <JWT>'"}) , 422
+                return dict(message = "Bad Authorization header. Expected value 'Bearer <JWT>'") , 422
             
             payload = jwt.decode(token, os.getenv('JWT_Token'), algorithms= ['HS256'])
             
@@ -39,6 +39,6 @@ def admin_required(fn):
     @wraps(fn)
     @jwt_required
     def wrapper(*args, **kwargs):
-        
+
         return fn(*args, **kwargs)
     return wrapper
