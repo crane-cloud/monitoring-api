@@ -25,9 +25,8 @@ def jwt_required(fn):
                 return dict(message = "Bad Authorization header. Expected value 'Bearer <JWT>'") , 422
             
             payload = jwt.decode(token, os.getenv('JWT_Token'), algorithms= ['HS256'])
-            
-            # kwargs['current_user'] = payload
-                
+
+                            
         except jwt.exceptions.DecodeError:
             return dict(message = "Access token is not valid or key") , 401
         
@@ -39,6 +38,5 @@ def admin_required(fn):
     @wraps(fn)
     @jwt_required
     def wrapper(*args, **kwargs):
-
         return fn(*args, **kwargs)
     return wrapper
