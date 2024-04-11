@@ -7,6 +7,7 @@ class Base:
     # main
     SECRET_KEY = os.getenv("FLASK_APP_SECRET")
     VERIFICATION_SALT = os.getenv("FLASK_VERIFY_SALT")
+    PASSWORD_SALT = os.getenv("FLASK_APP_SALT")
 
 
 class Development(Base):
