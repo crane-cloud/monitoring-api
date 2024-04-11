@@ -6,6 +6,9 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from flasgger import Swagger
 
+from flask_jwt_extended import JWTManager
+
+
 from app.routes import api
 
 
@@ -38,6 +41,8 @@ def create_app(config_name):
     }
 
     Swagger(app, template_file='api_docs.yml')
+
+    jwt = JWTManager(app)
 
     # handle default 404 exceptions with a custom response
 
