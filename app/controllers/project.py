@@ -22,11 +22,14 @@ class ProjectMemoryUsageView(Resource):
         namespace = project.namespace
         prometheus = Prometheus()
 
-        prom_memory_data = prometheus.query_rang(
-            start=start,
-            end=end,
-            step=step,
-            metric='sum(rate(container_memory_usage_bytes{container_name!="POD", image!="", namespace="'+namespace+'"}[5m]))')
+        try:
+            prom_memory_data = prometheus.query_rang(
+                start=start,
+                end=end,
+                step=step,
+                metric='sum(rate(container_memory_usage_bytes{container_name!="POD", image!="", namespace="'+namespace+'"}[5m]))')
+        except Exception as error:
+            return dict(status='fail', message=str(error)), 500
 
         new_data = json.loads(prom_memory_data)
         final_data_list = []
