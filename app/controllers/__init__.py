@@ -1,3 +1,3 @@
 from .project import (ProjectCPUView, ProjectMemoryUsageView,
-                      ProjectNetworkRequestView, ProjectStorageUsageView)
+                      ProjectNetworkRequestView)
 from .index import (IndexView)
