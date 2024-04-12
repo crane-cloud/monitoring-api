@@ -29,3 +29,4 @@ rpds-py==0.18.0
 six==1.16.0
 urllib3==2.2.1
 Werkzeug==3.0.2
+marshmallow==3.21.1

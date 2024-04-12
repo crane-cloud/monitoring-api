@@ -1,7 +1,7 @@
 from flask_restful import Api
 from app.controllers import (
     IndexView, ProjectCPUView, ProjectMemoryUsageView,
-    ProjectNetworkRequestView, ProjectStorageUsageView, IndexView)
+    ProjectNetworkRequestView, IndexView)
 
 api = Api()
 
@@ -14,5 +14,3 @@ api.add_resource(ProjectMemoryUsageView,
                  '/projects/<string:project_id>/metrics/memory')
 api.add_resource(ProjectNetworkRequestView,
                  '/projects/<string:project_id>/metrics/network')
-api.add_resource(ProjectStorageUsageView,
-                 '/projects/<string:project_id>/metrics/storage')

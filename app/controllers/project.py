@@ -1,41 +1,120 @@
-import os
-import datetime
 import json
-from types import SimpleNamespace
-
-
-import datetime
 from prometheus_http_client import Prometheus
 from flask_restful import Resource, request
-from flask import current_app, render_template
+from app.helpers.utils import get_project_data
 
 from app.helpers.authenticate import (
     jwt_required
 )
 
-# Todo: figure out a way to connect to projects and get projects
-
 
 class ProjectMemoryUsageView(Resource):
-
     @jwt_required
     def post(self, project_id):
-        return dict(status='success', data=dict()), 200
+        project = get_project_data(project_id, request)
+
+        if project.status_code != 200:
+            return dict(status='fail', message=project.message), project.status_code
+
+        start = project.start
+        end = project.end
+        step = project.step
+        namespace = project.namespace
+        prometheus = Prometheus()
+
+        prom_memory_data = prometheus.query_rang(
+            start=start,
+            end=end,
+            step=step,
+            metric='sum(rate(container_memory_usage_bytes{container_name!="POD", image!="", namespace="'+namespace+'"}[5m]))')
+
+        new_data = json.loads(prom_memory_data)
+        final_data_list = []
+
+        try:
+            for value in new_data["data"]["result"][0]["values"]:
+                mem_case = {'timestamp': float(
+                    value[0]), 'value': float(value[1])}
+                final_data_list.append(mem_case)
+        except:
+            return dict(status='fail', message='No values found'), 404
+
+        return dict(status='success', data=dict(values=final_data_list)), 200
 
 
 class ProjectCPUView(Resource):
-    # @jwt_required
+    @jwt_required
     def post(self, project_id):
-        return dict(status='success', data=dict()), 200
+        project = get_project_data(project_id, request)
+
+        if project.status_code != 200:
+            return dict(status='fail', message=project.message), project.status_code
+
+        start = project.start
+        end = project.end
+        step = project.step
+        namespace = project.namespace
+        prometheus = Prometheus()
+
+        try:
+            prom_cpu_data = prometheus.query_rang(
+                start=start,
+                end=end,
+                step=step,
+                metric='sum(rate(container_cpu_usage_seconds_total{container!="POD", image!="",namespace="' +
+                namespace+'"}[5m]))'
+            )
+        except Exception as error:
+            return dict(status='fail', message=str(error)), 500
+
+        new_data = json.loads(prom_cpu_data)
+        final_data_list = []
+
+        try:
+            for value in new_data["data"]["result"][0]["values"]:
+                mem_case = {'timestamp': float(
+                    value[0]), 'value': float(value[1])}
+                final_data_list.append(mem_case)
+        except:
+            return dict(status='fail', message='No values found'), 404
+
+        return dict(status='success', data=dict(values=final_data_list)), 200
 
 
 class ProjectNetworkRequestView(Resource):
-    # @jwt_required
+    @ jwt_required
     def post(self, project_id):
-        return dict(status='success', data=dict()), 200
+        project = get_project_data(project_id, request)
 
+        if project.status_code != 200:
+            return dict(status='fail', message=project.message), project.status_code
 
-class ProjectStorageUsageView(Resource):
-    # @jwt_required
-    def post(self, project_id):
-        return dict(status='success', data=dict()), 200
+        start = project.start
+        end = project.end
+        step = project.step
+        namespace = project.namespace
+        prometheus = Prometheus()
+
+        try:
+            prom_ntw_data = prometheus.query_rang(
+                start=start,
+                end=end,
+                step=step,
+                metric='sum(rate(container_network_receive_bytes_total{namespace="' +
+                namespace+'"}[5m]))'
+            )
+        except Exception as error:
+            return dict(status='fail', message=str(error)), 500
+
+        new_data = json.loads(prom_ntw_data)
+        final_data_list = []
+
+        try:
+            for value in new_data["data"]["result"][0]["values"]:
+                mem_case = {'timestamp': float(
+                    value[0]), 'value': float(value[1])}
+                final_data_list.append(mem_case)
+        except:
+            return dict(status='fail', message='No values found'), 404
+
+        return dict(status='success', data=dict(values=final_data_list)), 200
