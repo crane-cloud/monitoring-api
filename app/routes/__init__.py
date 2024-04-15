@@ -17,8 +17,8 @@ api.add_resource(ProjectNetworkRequestView,
 
 # Apps routes
 api.add_resource(AppMemoryUsageView,
-                 '/projects/<string:project_id>/apps/<string:app_id>/memory')
+                 '/projects/<string:project_id>/apps/<string:app_id>/metrics/memory')
 api.add_resource(
-    AppCpuUsageView, '/projects/<string:project_id>/apps/<string:app_id>/cpu')
+    AppCpuUsageView, '/projects/<string:project_id>/apps/<string:app_id>/metrics/cpu')
 api.add_resource(AppNetworkUsageView,
-                 '/projects/<string:project_id>/apps/<string:app_id>/network')
+                 '/projects/<string:project_id>/apps/<string:app_id>/metrics/network')
