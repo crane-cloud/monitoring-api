@@ -259,3 +259,95 @@ paths:
           description: "Bad request"
         500:
           description: "Internal Server Error"
+
+  "/projects/{project_id}/databases/{database_id}/metrics/size":
+    post:
+      tags:
+        - databases
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          description: "Bearer [token]"
+          type: string
+        - in: path
+          name: project_id
+          required: true
+          type: string
+        - in: path
+          name: database_id
+          required: true
+          type: string
+        - in: body
+          name: database metrics
+          schema:
+            properties:
+              start:
+                type: number
+                format: float
+              end:
+                type: number
+                format: float
+              step:
+                type: string  
+      consumes:
+        - application/json
+      produces:
+        - application/json
+    
+      responses:
+        200:
+          description: "Metrics for a single database"
+        404:
+          description: "Database metrics not found"
+        400:
+          description: "Bad request"
+        500:
+          description: "Internal Server Error"
+
+
+  "/projects/{project_id}/databases/{database_id}/metrics/connetions":
+    post:
+      tags:
+        - databases
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          description: "Bearer [token]"
+          type: string
+        - in: path
+          name: project_id
+          required: true
+          type: string
+        - in: path
+          name: database_id
+          required: true
+          type: string
+        - in: body
+          name: database metrics
+          schema:
+            properties:
+              start:
+                type: number
+                format: float
+              end:
+                type: number
+                format: float
+              step:
+                type: string  
+      consumes:
+        - application/json
+      produces:
+        - application/json
+    
+      responses:
+        200:
+          description: "Metrics for a single database"
+        404:
+          description: "Database metrics not found"
+        400:
+          description: "Bad request"
+        500:
+          description: "Internal Server Error"
+

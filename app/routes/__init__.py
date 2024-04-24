@@ -1,8 +1,8 @@
 from flask_restful import Api
 from app.controllers import (
     IndexView, ProjectCPUView, ProjectMemoryUsageView,
-    ProjectNetworkRequestView, AppCpuUsageView, AppMemoryUsageView, AppNetworkUsageView)
-
+    ProjectNetworkRequestView, AppCpuUsageView, AppMemoryUsageView, AppNetworkUsageView , DatabaseSizeView , DatabaseConnectionsView)
+    
 api = Api()
 
 # Index route
@@ -22,3 +22,10 @@ api.add_resource(
     AppCpuUsageView, '/projects/<string:project_id>/apps/<string:app_id>/metrics/cpu')
 api.add_resource(AppNetworkUsageView,
                  '/projects/<string:project_id>/apps/<string:app_id>/metrics/network')
+
+
+#Database routes
+api.add_resource(DatabaseSizeView,
+                 '/projects/<string:project_id>/databases/<string:database_id>/metrics/size')
+api.add_resource(DatabaseConnectionsView,
+                 '/projects/<string:project_id>/databases/<string:database_id>/metrics/connetions')
