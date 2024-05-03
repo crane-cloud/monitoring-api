@@ -5,9 +5,10 @@ from app.schemas import MetricsSchema
 from types import SimpleNamespace
 
 PRODUCT_BASE_URL = os.getenv('PRODUCT_BASE_URL')
+DATABASE_BASE_URL = os.getenv('DATABASE_BASE_URL')
 PROJECT_ENDPOINT = f"{PRODUCT_BASE_URL}/projects"
 APP_ENDPOINT = f"{PRODUCT_BASE_URL}/apps"
-DATABASE_ENDPOINT = f"{PRODUCT_BASE_URL}/database"
+DATABASE_ENDPOINT = f"{DATABASE_BASE_URL}/databases"
 
 
 def get_project_data(project_id, request):
@@ -130,10 +131,13 @@ def get_database_data(project_id, database_id, request):
     current_time = datetime.datetime.now()
     yesterday_time = current_time + datetime.timedelta(days=-1)
 
-    start = validated_query_data.get('start', yesterday_time.timestamp())
+    start = validated_query_data.get('start', yesterday_time.timestamp()) 
     end = validated_query_data.get('end', current_time.timestamp())
     step = validated_query_data.get('step', '1h')
 
+    start = start if ((start != 0.0) and (start != None)) else yesterday_time.timestamp()
+    end = end if ((end != 0.0) and (end != None)) else current_time.timestamp()
+    step = step if ((step != "string") and (step != None)) else '1h'
 
     # get project details
     project_response = requests.get(
@@ -173,8 +177,8 @@ def get_database_data(project_id, database_id, request):
         start=start,
         end=end,
         step=step,
-        database=database_response.name,
-        flavour=database_response.database_flavour_name ,
+        database=database_response.get('name'),
+        flavour=database_response.get('database_flavour_name') ,
         status_code=200
     )
 

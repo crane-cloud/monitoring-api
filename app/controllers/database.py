@@ -11,7 +11,7 @@ import os
 
 class DatabaseSizeView(Resource):
 
-    @jwt_required
+    # @jwt_required
     def post(self , project_id , database_id):
 
         database = get_database_data(project_id,database_id ,request)
@@ -30,7 +30,7 @@ class DatabaseSizeView(Resource):
                     start=start,
                     end=end,
                     step=step,
-                    metric="sum(rate(pg_database_size_bytes{datname='" + database.name + "'}[5m]))"
+                    metric="sum(rate(pg_database_size_bytes{datname='" + database.database + "'}[5m]))"
                 )
             else :
                 return dict(status='success' , data=dict(message="Mysql not yet supported")),200
@@ -54,7 +54,7 @@ class DatabaseSizeView(Resource):
 
 class DatabaseConnectionsView(Resource):
 
-    @jwt_required
+    # @jwt_required
     def post(self , project_id , database_id):
 
         database = get_database_data(project_id,database_id ,request)
@@ -74,10 +74,11 @@ class DatabaseConnectionsView(Resource):
                     start=start,
                     end=end,
                     step=step,
-                    metric="sum(rate(pg_stat_activity_count{datname='" + database.name + "'}[5m]))"
+                    metric="sum(rate(pg_stat_activity_count{datname='" + database.database + "'}[5m]))"
                 )
 
             else :
+                
                 return dict(status='success' , data=dict(message="Mysql not yet supported")),200
 
         except Exception as error:

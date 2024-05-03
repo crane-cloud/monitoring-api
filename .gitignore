@@ -2,6 +2,7 @@ __pycache__/
 venv/
 .venv/
 .env
+.env.bat
 *.pyc
 .coverage
 .vscode/
