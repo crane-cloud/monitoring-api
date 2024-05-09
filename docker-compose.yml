@@ -3,7 +3,7 @@ services:
   database:
     restart: always
     image: postgres:10.8-alpine
-    container_name: postgres-db
+    container_name: monitoring-postgres-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: cc-monitoring
@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: flask-api
+    container_name: monitoring-api
     environment:
       FLASK_APP_SECRET:
       JWT_SALT:
