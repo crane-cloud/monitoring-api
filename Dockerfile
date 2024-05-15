@@ -20,7 +20,7 @@ COPY . /app
 
 
 # make port available to the world outside this container
-EXPOSE 4000
+EXPOSE 5000
 
 # connect to start script when db is being used
-CMD ["flask", "run", "--host=0.0.0.0", "--port=4000"]
+ENTRYPOINT ["sh", "/app/scripts/start.sh"]
