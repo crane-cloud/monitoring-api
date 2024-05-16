@@ -37,6 +37,7 @@ def get_project_data(project_id, request):
         return SimpleNamespace(status='failed', message="Failed to fetch project for current user", status_code=400)
 
     project_response = project_response.json()
+    # print(project_response)
 
     project_data = project_response['data']['project']
 
