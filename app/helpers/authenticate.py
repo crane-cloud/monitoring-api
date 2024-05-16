@@ -1,9 +1,9 @@
-from flask_jwt_extended import (
-    jwt_required as jwt,
-    verify_jwt_in_request
-)
+# from flask_jwt_extended import (
+#     jwt_required as jwt,
+#     verify_jwt_in_request
+# )
 from functools import wraps
-import jwt
+from jose import jwt
 from flask import request, jsonify
 import os
 
@@ -29,7 +29,6 @@ def jwt_required(fn):
 
         except jwt.exceptions.DecodeError:
             return dict(message="Access token is not valid or key"), 401
-
         return fn(*args, **kwargs)
     return wrapper
 
