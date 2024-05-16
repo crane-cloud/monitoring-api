@@ -1,9 +1,9 @@
-from flask_jwt_extended import (
-    jwt_required as jwt,
-    verify_jwt_in_request
-)
+# from flask_jwt_extended import (
+#     jwt_required as jwt,
+#     verify_jwt_in_request
+# )
 from functools import wraps
-import jwt
+from jose import jwt
 from flask import request, jsonify
 import os
 
@@ -18,7 +18,6 @@ def jwt_required(fn):
 
         if access_token is None:
             return dict(message='Access token was not supplied'), 401
-
         try:
             token = access_token.split(' ')[1]
             if (access_token.split(' ')[0] != "Bearer"):
@@ -27,7 +26,8 @@ def jwt_required(fn):
             payload = jwt.decode(token, os.getenv(
                 'JWT_SALT'), algorithms=['HS256'])
 
-        except jwt.exceptions.DecodeError:
+        except Exception as e:
+            print(e)
             return dict(message="Access token is not valid or key"), 401
 
         return fn(*args, **kwargs)

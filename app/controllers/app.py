@@ -7,6 +7,7 @@ from app.helpers.authenticate import (
 )
 from app.helpers.utils import get_app_data
 
+
 class AppMemoryUsageView(Resource):
     @jwt_required
     def post(self, project_id, app_id):
@@ -31,7 +32,14 @@ class AppMemoryUsageView(Resource):
         except Exception as error:
             return dict(status='fail', message=str(error)), 500
 
-        new_data = json.loads(prom_memory_data)
+        if not prom_memory_data:
+            return dict(status='fail', message="Failed to connect to prometheus"), 500
+
+        try:
+            new_data = json.loads(prom_memory_data)
+        except Exception as error:
+            return dict(status='fail', message=str(prom_memory_data)), 500
+
         final_data_list = []
 
         try:
@@ -70,7 +78,14 @@ class AppCpuUsageView(Resource):
         except Exception as error:
             return dict(status='fail', message=str(error)), 500
 
-        new_data = json.loads(prom_cpu_data)
+        if not prom_cpu_data:
+            return dict(status='fail', message="Failed to connect to prometheus"), 500
+
+        try:
+            new_data = json.loads(prom_cpu_data)
+        except Exception as error:
+            return dict(status='fail', message=str(prom_cpu_data)), 500
+
         final_data_list = []
 
         try:
@@ -109,7 +124,14 @@ class AppNetworkUsageView(Resource):
         except Exception as error:
             return dict(status='fail', message=str(error)), 500
 
-        new_data = json.loads(prom_net_data)
+        if not prom_net_data:
+            return dict(status='fail', message="Failed to connect to prometheus"), 500
+
+        try:
+            new_data = json.loads(prom_net_data)
+        except Exception as error:
+            return dict(status='fail', message=str(prom_net_data)), 500
+
         final_data_list = []
 
         try:

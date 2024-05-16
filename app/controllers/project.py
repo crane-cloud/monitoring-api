@@ -31,7 +31,14 @@ class ProjectMemoryUsageView(Resource):
         except Exception as error:
             return dict(status='fail', message=str(error)), 500
 
-        new_data = json.loads(prom_memory_data)
+        if not prom_memory_data:
+            return dict(status='fail', message="Failed to connect to prometheus"), 500
+
+        try:
+            new_data = json.loads(prom_memory_data)
+        except Exception as error:
+            return dict(status='fail', message=str(prom_memory_data)), 500
+
         final_data_list = []
 
         try:
@@ -70,9 +77,15 @@ class ProjectCPUView(Resource):
         except Exception as error:
             return dict(status='fail', message=str(error)), 500
 
-        new_data = json.loads(prom_cpu_data)
-        final_data_list = []
+        if not prom_cpu_data:
+            return dict(status='fail', message="Failed to connect to prometheus"), 500
 
+        try:
+            new_data = json.loads(prom_cpu_data)
+        except Exception as error:
+            return dict(status='fail', message=str(prom_cpu_data)), 500
+
+        final_data_list = []
         try:
             for value in new_data["data"]["result"][0]["values"]:
                 mem_case = {'timestamp': float(
@@ -109,7 +122,14 @@ class ProjectNetworkRequestView(Resource):
         except Exception as error:
             return dict(status='fail', message=str(error)), 500
 
-        new_data = json.loads(prom_ntw_data)
+        if not prom_ntw_data:
+            return dict(status='fail', message="Failed to connect to prometheus"), 500
+
+        try:
+            new_data = json.loads(prom_ntw_data)
+        except Exception as error:
+            return dict(status='fail', message=str(prom_ntw_data)), 500
+
         final_data_list = []
 
         try:
