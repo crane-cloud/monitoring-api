@@ -25,7 +25,7 @@ def jwt_required(fn):
 
             payload = jwt.decode(token, os.getenv(
                 'JWT_SALT'), algorithms=['HS256'])
-            print(payload)
+
         except Exception as e:
             print(e)
             return dict(message="Access token is not valid or key"), 401
