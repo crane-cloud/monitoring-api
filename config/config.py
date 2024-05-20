@@ -6,7 +6,7 @@ class Base:
 
     # main
     SECRET_KEY = os.getenv("FLASK_APP_SECRET")
-    JWT_SALT = os.getenv("JWT_SALT")
+    FLASK_APP_SALT = os.getenv("FLASK_APP_SALT")
     PRODUCT_BASE_URL = os.getenv('PRODUCT_BASE_URL')
 
 

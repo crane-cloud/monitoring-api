@@ -1,10 +1,6 @@
-# from flask_jwt_extended import (
-#     jwt_required as jwt,
-#     verify_jwt_in_request
-# )
 from functools import wraps
 from jose import jwt
-from flask import request, jsonify
+from flask import request
 import os
 
 
@@ -24,7 +20,7 @@ def jwt_required(fn):
                 return dict(message="Bad Authorization header. Expected value 'Bearer <JWT>'"), 422
 
             payload = jwt.decode(token, os.getenv(
-                'JWT_SALT'), algorithms=['HS256'])
+                'FLASK_APP_SALT'), algorithms=['HS256'])
 
         except Exception as e:
             print(e)
