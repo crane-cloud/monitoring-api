@@ -13,6 +13,7 @@ class MetricsSchema(Schema):
     project_name = fields.String()
     app_name = fields.String()
     app_id = fields.String()
+    prometheus_url = fields.String()
 
 
 class UserGraphSchema(Schema):

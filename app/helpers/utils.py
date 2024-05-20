@@ -27,9 +27,13 @@ def get_project_data(request):
     step = validated_query_data.get('step', '1h')
     project_id = validated_query_data.get('project_id', '')
     project_name = validated_query_data.get('project_name', '')
+    prometheus_url = validated_query_data.get('prometheus_url', '')
 
     if not project_id and not project_name:
         return SimpleNamespace(status='failed', message="project_id or project_name is required", status_code=400)
+
+    if project_name and not prometheus_url:
+        return SimpleNamespace(status='fail', message='Please add a prometheus_url', status_code=404)
 
     if not project_name:
         project_response = requests.get(
@@ -42,22 +46,11 @@ def get_project_data(request):
 
         project_response = project_response.json()
         project_data = project_response['data']['project']
-        project_name = project_data['alias']
+        project_name = project_data.get('alias', '')
+        prometheus_url = project_data.get('prometheus_url', '')
 
-    # cluster_response = requests.get(
-    #     f"{PRODUCT_BASE_URL}/clusters/{project_data['cluster_id']}", headers={
-    #         "accept": "application/json",
-    #         "Authorization": request.headers.get('Authorization')
-    #     })
-
-    # print(cluster_response.json())
-
-    # if not cluster_response.ok:
-    #     return SimpleNamespace(status='failed', message="Failed to fetch cluster info for the project", status_code=400)
-
-    prometheus_url = ' https://prom.renu-01.cranecloud.io'
     if not prometheus_url:
-        return SimpleNamespace(status='fail', message='No prometheus url provided', status_code=404)
+        return SimpleNamespace(status='fail', message='No prometheus url available on the project', status_code=404)
 
     os.environ["PROMETHEUS_URL"] = prometheus_url
     return SimpleNamespace(

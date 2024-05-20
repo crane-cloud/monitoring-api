@@ -32,6 +32,8 @@ paths:
                 format: float
               step:
                 type: string
+              prometheus_url:
+                type: string
               project_id:
                 type: string
               project_name:
@@ -78,6 +80,8 @@ paths:
               step:
                 type: string
               project_id:
+                type: string
+              prometheus_url:
                 type: string
               project_name:
                 type: string
