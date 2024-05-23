@@ -5,9 +5,9 @@ class MetricsSchema(Schema):
     start = fields.Float()
     end = fields.Float()
     step = fields.String(validate=[
-        validate.OneOf(["year", "month"],
-                       error='set_by should be year or month'
-                       )
+        validate.Regexp(
+            regex=r'^(?!\s*$)', error='step value should be a valid string'
+        )
     ])
     project_id = fields.String()
     project_name = fields.String()
