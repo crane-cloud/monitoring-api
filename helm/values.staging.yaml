@@ -6,8 +6,21 @@ image:
   tag: ${{ DOCKER_IMAGE_TAG }}
 
 nameOverride: "monitoring-api"
-fullnameOverride: ""
 
+nginxConf:
+  server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            proxy_pass http://localhost:5000/;
+            proxy_set_header Host "localhost";
+        }
+    }
+
+service:
+  type: NodePort
+  port: 80
 
 environment:
   DATABASE_URI: ${{ DATABASE_URL }}
@@ -19,3 +32,9 @@ environment:
   FLASK_ENV: production
   LOGGER_APP_URL: ${{ LOGGER_APP_URL }}
   PRODUCT_BASE_URL: ${{PRODUCT_BASE_URL}}
+
+celery:
+  create: false
+
+redis:
+  create: false

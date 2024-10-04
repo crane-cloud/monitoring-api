@@ -73,7 +73,7 @@ jobs:
     name: Deploy (Staging)
 
     needs:
-      - Build
+      - build
 
     runs-on: ubuntu-latest
     env:
@@ -92,28 +92,29 @@ jobs:
         uses: google-github-actions/auth@v0
         with:
           credentials_json: ${{ secrets.CREDENTIALS_JSON }}
-      
+
       - name: Install (Gcloud)
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: crane-cloud-274413
           install_components: "gke-gcloud-auth-plugin"
-  
+
       - name: Login (Kubernetes Cluster)
         uses: google-github-actions/get-gke-credentials@v1
         with:
           cluster_name: staging-cluster
           location: us-central1-a
           project_id: crane-cloud-274413
-  
-      # - name: Add Repo (cranecloud)
-      #   run: |
-      #     helm repo add cranecloud https://crane-cloud.github.io/helm-charts/
 
+      - name: Add Repo (cranecloud)
+        run: |
+          helm repo add cranecloud https://crane-cloud.github.io/helm-charts/
+
+        # monitoring-api ./helm/chart \
       - name: Helm Release
         run: |
           helm upgrade --install --create-namespace \
-          monitoring-api ./helm/chart \
+          monitoring-api cranecloud/cranecloud \
           --values helm/values.staging.yaml \
           --namespace $namespace \
           --set image.tag="${{ needs.build.outputs.tag }}" \
