@@ -1,6 +1,6 @@
 # Crane Cloud Monitoring API
-
 [![Prod](https://github.com/crane-cloud/monitoring-api/actions/workflows/prod.yml/badge.svg)](https://github.com/crane-cloud/monitoring-api/actions/workflows/prod.yml)
+[![staging](https://github.com/crane-cloud/monitoring-api/actions/workflows/staging.yml/badge.svg)](https://github.com/crane-cloud/monitoring-api/actions/workflows/staging.yml)
 
 The Crane Cloud Monitoring API provides a backend service for monitoring resource usage (CPU, memory, network) within a Kubernetes environment. It interfaces with Prometheus to fetch and aggregate metrics data.
 
@@ -44,5 +44,3 @@ The Crane Cloud Monitoring API provides a backend service for monitoring resourc
 ## API Documentation
 
 Swagger documentation is available once the application is running, accessible at `/apidocs`.
-
-
