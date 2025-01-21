@@ -1,12 +1,14 @@
 ---
-name: staging
+name: Prod
 
 on:
+  release:
+    types:
+      - released
+      - prereleased
   push:
     branches:
-      - master
-
-  workflow_dispatch:
+      - deploy/gcp
 
 jobs:
   build:
@@ -15,21 +17,29 @@ jobs:
       tag: ${{ steps.export.outputs.tag }}
 
     runs-on: ubuntu-latest
-    env:
-      image: cranecloud/monitoring-api
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          ref: master # Reference branch
 
       - name: Install (Buildx)
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
+      - name: Login (GCP)
+        uses: google-github-actions/auth@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          credentials_json: ${{ secrets.CREDENTIALS_JSON }}
+
+      - name: Install (Gcloud)
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: crane-cloud-274413
+          install_components: "gke-gcloud-auth-plugin"
+
+      - name: Login (GCR)
+        run: gcloud auth configure-docker
 
       - id: meta
         name: Tag
@@ -37,10 +47,12 @@ jobs:
         with:
           flavor: |
             latest=true
-          images: ${{ env.image }}
+          images: gcr.io/crane-cloud-274413/monitoring-api
           tags: |
             type=ref,event=branch
             type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             type=sha
 
       - name: Build
@@ -49,6 +61,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           context: .
+          file: docker/prod/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -68,27 +81,23 @@ jobs:
               core.setOutput('tag', tag)
             }
 
-  Microservice:
-    name: Deploy (Staging)
+  Production:
+    name: Deploy (Production)
 
     needs:
       - build
 
     runs-on: ubuntu-latest
+
     env:
-      namespace: cranecloud
-      image: cranecloud/monitoring-api
+      namespace: cranecloud-prod
 
     steps:
-      - name: Checkout code
+      - name: Clone
         uses: actions/checkout@v2
 
-      # - uses: azure/k8s-set-context@v1
-      #   with:
-      #     kubeconfig: ${{ secrets.RENU_KUBECONFIG}}
-
       - name: Login (GCP)
-        uses: google-github-actions/auth@v0
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.CREDENTIALS_JSON }}
 
@@ -111,18 +120,18 @@ jobs:
 
       - name: Helm Release
         run: |
-          helm upgrade --install --create-namespace \
+          helm upgrade --install \
           monitoring-api cranecloud/cranecloud \
-          --values helm/values.staging.yaml \
+          --values helm/values.prod.yaml \
           --namespace $namespace \
           --set image.tag="${{ needs.build.outputs.tag }}" \
-          --set environment.DATABASE_URI="${{ secrets.STAGING_DATABASE_URI }}" \
-          --set environment.DATABASE_USER="${{ secrets.STAGING_DATABASE_USER }}" \
-          --set environment.TEST_DATABASE_URL="${{ secrets.STAGING_TEST_DATABASE_URL }}" \
-          --set environment.FLASK_APP_SALT="${{ secrets.STAGING_FLASK_APP_SALT }}" \
-          --set environment.FLASK_APP_SECRET="${{ secrets.STAGING_FLASK_APP_SECRET }}" \
-          --set environment.PRODUCT_BASE_URL="${{ secrets.STAGING_PRODUCT_BASE_URL }}" \
-          --set environment.LOGGER_APP_URL="${{ secrets.STAGING_LOGGER_APP_URL }}" \
+          --set environment.DATABASE_URI="${{ secrets.PRODUCTION_DATABASE_URI }}" \
+          --set environment.DATABASE_USER="${{ secrets.PRODUCTION_DATABASE_USER }}" \
+          --set environment.TEST_DATABASE_URL="${{ secrets.PRODUCTION_TEST_DATABASE_URL }}" \
+          --set environment.FLASK_APP_SALT="${{ secrets.PRODUCTION_JWT_SALT }}" \
+          --set environment.FLASK_APP_SECRET="${{ secrets.PRODUCTION_JWT_SALT }}" \
+          --set environment.PRODUCT_BASE_URL="${{ secrets.PRODUCTION_PRODUCT_BASE_URL }}" \
+          --set environment.LOGGER_APP_URL="${{ secrets.PRODUCTION_LOGGER_APP_URL }}" \
           --timeout=300s
 
       - name: Monitor Rollout
