@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: cranecloud/monitoring-api
+  repository: gcr.io/crane-cloud-274413/monitoring-api
   pullPolicy: Always
   tag: ${{ DOCKER_IMAGE_TAG }}
 
