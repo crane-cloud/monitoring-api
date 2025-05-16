@@ -16,6 +16,9 @@ class AppUsageView(Resource):
 
         app = get_app_data(request)
 
+        if app.status_code != 200:
+            return dict(status='fail', message=app.message), app.status_code
+
         start = app.start
         end = app.end
         step = app.step
