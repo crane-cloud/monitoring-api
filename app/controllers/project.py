@@ -1,7 +1,7 @@
 import json
 from prometheus_http_client import Prometheus
 from flask_restful import Resource, request
-from app.helpers.utils import get_project_data
+from app.helpers.utils import get_project_data,is_valid_prometheus_query
 
 from app.helpers.authenticate import (
     jwt_required
@@ -24,6 +24,11 @@ class ProjectUsageView(Resource):
         step = project.step
         namespace = project.namespace
         prometheus = Prometheus()
+
+        if step:
+            is_valid, message = is_valid_prometheus_query(step, start, end)
+            if not is_valid:
+                return dict(status='fail', message=message), 400
 
         try:
             if resource == 'cpu':

@@ -3,6 +3,7 @@ import os
 import datetime
 from app.schemas import MetricsSchema
 from types import SimpleNamespace
+import re
 
 PRODUCT_BASE_URL = os.getenv('PRODUCT_BASE_URL')
 PROJECT_ENDPOINT = f"{PRODUCT_BASE_URL}/projects"
@@ -106,3 +107,46 @@ def get_app_data(request):
         namespace=project_data.namespace,
         status_code=200
     )
+
+
+
+# default mx data points for prometheus
+MAX_DATA_POINTS = 11000
+STEP_UNITS_IN_SECONDS = {
+    "s": 1,
+    "m": 60,
+    "h": 3600,
+    "d": 86400,
+    "w": 604800,
+}
+
+def parse_step_to_seconds(step: str) -> int:
+    """
+    Parses a Prometheus step string like '1m', '2h', '4d' into seconds.
+    """
+    match = re.match(r"^(\d+)([smhdw])$", step)
+    if not match:
+        raise ValueError("Invalid step format. Use formats like 30s, 5m, 2h, 1d.")
+    value, unit = match.groups()
+    return int(value) * STEP_UNITS_IN_SECONDS[unit]
+
+def is_valid_prometheus_query(step: str, start_ts: int, end_ts: int) -> (bool, str):
+    """
+    Validates if the number of points in a Prometheus query is within the allowed range.
+    """
+    try:
+        step_seconds = parse_step_to_seconds(step)
+    except ValueError as e:
+        return False, str(e)
+    
+    if start_ts >= end_ts:
+        return False, "Start timestamp must be less than end timestamp."
+    
+    total_duration = end_ts - start_ts
+    num_points = total_duration // step_seconds
+
+    if num_points > MAX_DATA_POINTS:
+        return False, f"Query returns {num_points} points, which exceeds the limit of {MAX_DATA_POINTS}. Increase the step or reduce the time range."
+    
+    return True, f"Query valid: {num_points} data points."
+
