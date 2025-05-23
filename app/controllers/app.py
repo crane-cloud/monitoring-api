@@ -5,7 +5,7 @@ from flask_restful import Resource, request
 from app.helpers.authenticate import (
     jwt_required
 )
-from app.helpers.utils import get_app_data
+from app.helpers.utils import get_app_data, is_valid_prometheus_query
 
 
 class AppUsageView(Resource):
@@ -25,6 +25,11 @@ class AppUsageView(Resource):
         app_alias = app.app_alias
         namespace = app.namespace
         prometheus = Prometheus()
+
+        if step:
+            is_valid, message = is_valid_prometheus_query(step, start, end)
+            if not is_valid:
+                return dict(status='fail', message=message), 400
 
         try:
             if resource == 'cpu':
