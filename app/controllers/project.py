@@ -1,7 +1,7 @@
 import json
 from prometheus_http_client import Prometheus
 from flask_restful import Resource, request
-from app.helpers.utils import get_project_data,is_valid_prometheus_query
+from app.helpers.utils import get_project_data, is_valid_prometheus_query
 
 from app.helpers.authenticate import (
     jwt_required
@@ -11,8 +11,8 @@ from app.helpers.authenticate import (
 class ProjectUsageView(Resource):
     @jwt_required
     def post(self, resource):
-        if resource not in ['cpu', 'memory', 'network']:
-            return dict(status='fail', message='Invalid resource name, pass cpu, memory, network'), 400
+        if resource not in ['cpu', 'memory', 'network', 'gpu']:
+            return dict(status='fail', message='Invalid resource name, pass cpu, memory, network, gpu'), 400
 
         project = get_project_data(request)
 
@@ -51,6 +51,14 @@ class ProjectUsageView(Resource):
                     end=end,
                     step=step,
                     metric='sum(rate(container_network_receive_bytes_total{namespace="' +
+                    namespace+'"}[5m]))'
+                )
+            elif resource == 'gpu':
+                prom_data = prometheus.query_rang(
+                    start=start,
+                    end=end,
+                    step=step,
+                    metric='sum(rate(container_gpu_usage_seconds_total{namespace="' +
                     namespace+'"}[5m]))'
                 )
             else:
