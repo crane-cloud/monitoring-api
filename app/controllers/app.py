@@ -11,13 +11,15 @@ from app.helpers.utils import get_app_data, is_valid_prometheus_query
 class AppUsageView(Resource):
     @jwt_required
     def post(self, resource):
-        if resource not in ['cpu', 'memory', 'network']:
-            return dict(status='fail', message='Invalid resource name, pass cpu, memory, network'), 400
+        if resource not in ['cpu', 'memory', 'network', 'gpu']:
+            return dict(status='fail', message='Invalid resource name, pass cpu, memory, network, gpu'), 400
 
         app = get_app_data(request)
-
-        if app.status_code != 200:
-            return dict(status='fail', message=app.message), app.status_code
+        try:
+            if app.status_code != 200:
+                return dict(status='fail', message=app.message), app.status_code
+        except:
+            return app
 
         start = app.start
         end = app.end
@@ -31,30 +33,37 @@ class AppUsageView(Resource):
             if not is_valid:
                 return dict(status='fail', message=message), 400
 
+        QUERY = f'''{{container!="POD", image!="", namespace="{namespace}", pod=~"{app_alias}.*"}}'''
+
         try:
             if resource == 'cpu':
                 prom_data = prometheus.query_rang(
                     start=start,
                     end=end,
                     step=step,
-                    metric='sum(rate(container_cpu_usage_seconds_total{container!="POD", image!="", namespace="' +
-                    namespace + '", pod=~"' + app_alias + '.*"}[5m]))')
+                    metric=f'''sum(rate(container_cpu_usage_seconds_total{QUERY}[5m]))''')
             elif resource == 'memory':
                 prom_data = prometheus.query_rang(
                     start=start,
                     end=end,
                     step=step,
-                    metric='sum(rate(container_memory_usage_bytes{container_name!="POD", image!="",pod=~"' + app_alias + '.*", namespace="' + namespace + '"}[5m]))')
+                    metric=f'''sum(rate(container_memory_usage_bytes{QUERY}[5m]))''')
             elif resource == 'network':
                 prom_data = prometheus.query_rang(
                     start=start,
                     end=end,
                     step=step,
-                    metric='sum(rate(container_network_receive_bytes_total{namespace="' +
-                    namespace + '", pod=~"' + app_alias + '.*"}[5m]))'
+                    metric=f'''sum(rate(container_network_receive_bytes_total{QUERY}[5m]))''')
+
+            elif resource == 'gpu':
+                prom_data = prometheus.query_rang(
+                    start=start,
+                    end=end,
+                    step=step,
+                    metric=f'''sum(rate(container_gpu_usage_seconds_total{QUERY}[5m]))'''
                 )
             else:
-                return dict(status='fail', message='Invalid resource name, pass cpu, memory, network'), 400
+                return dict(status='fail', message='Invalid resource name, pass cpu, memory, network, gpu'), 400
         except Exception as error:
             return dict(status='fail', message=str(error)), 500
 
