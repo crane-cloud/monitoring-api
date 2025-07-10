@@ -29,40 +29,37 @@ class ProjectUsageView(Resource):
             is_valid, message = is_valid_prometheus_query(step, start, end)
             if not is_valid:
                 return dict(status='fail', message=message), 400
-
+        QUERY = f'''{{container!="POD", image!="", namespace="{namespace}"}}'''
         try:
             if resource == 'cpu':
                 prom_data = prometheus.query_rang(
                     start=start,
                     end=end,
                     step=step,
-                    metric='sum(rate(container_cpu_usage_seconds_total{container!="POD", image!="",namespace="' +
-                    namespace+'"}[5m]))'
+                    metric=f'''sum(rate(container_cpu_usage_seconds_total{QUERY}[5m]))'''
                 )
             elif resource == 'memory':
                 prom_data = prometheus.query_rang(
                     start=start,
                     end=end,
                     step=step,
-                    metric='sum(rate(container_memory_usage_bytes{container_name!="POD", image!="", namespace="'+namespace+'"}[5m]))')
+                    metric=f'''sum(rate(container_memory_usage_bytes{QUERY}[5m]))''')
             elif resource == 'network':
                 prom_data = prometheus.query_rang(
                     start=start,
                     end=end,
                     step=step,
-                    metric='sum(rate(container_network_receive_bytes_total{namespace="' +
-                    namespace+'"}[5m]))'
+                    metric=f'''sum(rate(container_network_receive_bytes_total{QUERY}[5m]))'''
                 )
             elif resource == 'gpu':
                 prom_data = prometheus.query_rang(
                     start=start,
                     end=end,
                     step=step,
-                    metric='sum(rate(container_gpu_usage_seconds_total{namespace="' +
-                    namespace+'"}[5m]))'
+                    metric=f'''sum(rate(container_gpu_usage_seconds_total{QUERY}[5m]))'''
                 )
             else:
-                return dict(status='fail', message='Invalid resource name, pass cpu, memory, network'), 400
+                return dict(status='fail', message='Invalid resource name, pass cpu, memory, network, gpu'), 400
         except Exception as error:
             return dict(status='fail', message=str(error)), 500
 

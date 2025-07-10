@@ -93,6 +93,8 @@ def get_app_data(request):
         )
 
         if not app_response.ok:
+            if app_response.status_code == 404:
+                return SimpleNamespace(status='failed', message=app_response.json()['message'], status_code=404)
             return SimpleNamespace(status='failed', message="Failed to fetch app for current user", status_code=400)
 
         app_response = app_response.json()
