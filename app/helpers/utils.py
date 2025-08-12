@@ -4,6 +4,7 @@ import datetime
 from app.schemas import MetricsSchema
 from types import SimpleNamespace
 import re
+from marshmallow import ValidationError
 
 PRODUCT_BASE_URL = os.getenv('PRODUCT_BASE_URL')
 PROJECT_ENDPOINT = f"{PRODUCT_BASE_URL}/projects"
@@ -14,17 +15,28 @@ def get_project_data(request):
     project_query_data = request.get_json()
 
     metric_schema = MetricsSchema()
-    validated_query_data = metric_schema.load(
-        project_query_data)
-
-    # if errors:
-    #     return dict(status='fail', message=errors), 400
+    try:
+        validated_query_data = metric_schema.load(project_query_data)
+    except ValidationError as e:
+        # Format error messages properly
+        error_messages = []
+        for field, messages in e.messages.items():
+            for message in messages:
+                error_messages.append(f"{field}: {message}")
+        return SimpleNamespace(status='fail', message='; '.join(error_messages), status_code=400)
 
     current_time = datetime.datetime.now()
     yesterday_time = current_time + datetime.timedelta(days=-1)
 
-    start = validated_query_data.get('start', yesterday_time.timestamp())
-    end = validated_query_data.get('end', current_time.timestamp())
+    start_raw = validated_query_data.get('start') or yesterday_time.timestamp()
+    end_raw = validated_query_data.get('end') or current_time.timestamp()
+    
+    # Convert millisecond timestamps to seconds if needed
+    start_val = float(start_raw)
+    end_val = float(end_raw)
+    
+    start = start_val / 1000 if start_val > 1e10 else start_val
+    end = end_val / 1000 if end_val > 1e10 else end_val
     step = validated_query_data.get('step', '1h')
     project_id = validated_query_data.get('project_id', '')
     project_name = validated_query_data.get('project_name', '')
@@ -67,8 +79,15 @@ def get_app_data(request):
     app_query_data = request.get_json()
 
     metric_schema = MetricsSchema()
-    validated_query_data = metric_schema.load(
-        app_query_data)
+    try:
+        validated_query_data = metric_schema.load(app_query_data)
+    except ValidationError as e:
+        # Format error messages properly
+        error_messages = []
+        for field, messages in e.messages.items():
+            for message in messages:
+                error_messages.append(f"{field}: {message}")
+        return SimpleNamespace(status='fail', message='; '.join(error_messages), status_code=400)
 
     app_name = validated_query_data.get('app_name', '')
     app_id = validated_query_data.get('app_id', '')
@@ -122,6 +141,26 @@ STEP_UNITS_IN_SECONDS = {
 }
 
 
+def suggest_optimal_step(duration_seconds: float) -> str:
+    min_step_seconds = duration_seconds / MAX_DATA_POINTS
+    
+    # Define step options in ascending order
+    step_options = [
+        (60, "1m"), (300, "5m"), (600, "10m"), (900, "15m"), (1800, "30m"),
+        (3600, "1h"), (7200, "2h"), (10800, "3h"), (14400, "4h"), (18000, "5h"),
+        (21600, "6h"), (43200, "12h"), (86400, "1d"), (172800, "2d"), (604800, "1w")
+    ]
+    
+    # Find the smallest step that satisfies the constraint
+    for step_seconds, step_str in step_options:
+        if step_seconds >= min_step_seconds:
+            return step_str
+    
+    # If even weekly steps aren't enough, calculate a custom step
+    weeks_needed = int(min_step_seconds / 604800) + 1
+    return f"{weeks_needed}w"
+
+
 def parse_step_to_seconds(step: str) -> int:
     """
     Parses a Prometheus step string like '1m', '2h', '4d' into seconds.
@@ -134,7 +173,7 @@ def parse_step_to_seconds(step: str) -> int:
     return int(value) * STEP_UNITS_IN_SECONDS[unit]
 
 
-def is_valid_prometheus_query(step: str, start_ts: int, end_ts: int) -> (bool, str):
+def is_valid_prometheus_query(step: str, start_ts: int, end_ts: int) -> tuple[bool, str]:
     """
     Validates if the number of points in a Prometheus query is within the allowed range.
     """
@@ -147,9 +186,10 @@ def is_valid_prometheus_query(step: str, start_ts: int, end_ts: int) -> (bool, s
         return False, "Start timestamp must be less than end timestamp."
 
     total_duration = end_ts - start_ts
-    num_points = total_duration // step_seconds
+    num_points = total_duration / step_seconds
 
     if num_points > MAX_DATA_POINTS:
-        return False, f"Query returns {num_points} points, which exceeds the limit of {MAX_DATA_POINTS}. Increase the step or reduce the time range."
+        suggested_step = suggest_optimal_step(total_duration)
+        return False, f"Query returns {num_points} points, which exceeds the limit of {MAX_DATA_POINTS}. Try using step '{suggested_step}' or reduce the time range."
 
-    return True, f"Query valid: {num_points} data points."
+    return True, f"Query valid: {int(num_points)} data points."
