@@ -7,6 +7,10 @@ on:
       - released
       - prereleased
 
+  push:
+    branches:
+      - ch-update-host-server
+
 jobs:
   build:
     outputs:
@@ -44,13 +48,13 @@ jobs:
         with:
           flavor: |
             latest=true
-          images: gcr.io/crane-cloud-274413/monitoring-api
+          images: cranecloud/monitoring-api
           tags: |
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
+            type=sha,prefix=prod-
 
       - name: Build
         uses: docker/build-push-action@v2
@@ -69,7 +73,7 @@ jobs:
         with:
           script: |
             const metadata = JSON.parse(`${{ steps.meta.outputs.json }}`)
-            const fullUrl = metadata.tags.find((t) => t.includes(':sha-'))
+            const fullUrl = metadata.tags.find((t) => t.includes(':prod-sha-'))
             if (fullUrl == null) {
               core.error('Unable to find sha tag of image')
             } else {
@@ -90,26 +94,32 @@ jobs:
       namespace: cranecloud-prod
 
     steps:
-      - name: Clone
+      # --- RENU DEPLOYEMENT ---
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Login (GCP)
-        uses: google-github-actions/auth@v2
+      - uses: azure/k8s-set-context@v1
         with:
-          credentials_json: ${{ secrets.CREDENTIALS_JSON }}
+          kubeconfig: ${{ secrets.RENU_KUBECONFIG}}
 
-      - name: Install (Gcloud)
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: crane-cloud-274413
-          install_components: "gke-gcloud-auth-plugin"
+      # --- GCP DEPLOYEMENT ---
+      # - name: Login (GCP)
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     credentials_json: ${{ secrets.CREDENTIALS_JSON }}
 
-      - name: Login (Kubernetes Cluster)
-        uses: google-github-actions/get-gke-credentials@v1
-        with:
-          cluster_name: staging-cluster
-          location: us-central1-a
-          project_id: crane-cloud-274413
+      # - name: Install (Gcloud)
+      #   uses: google-github-actions/setup-gcloud@v1
+      #   with:
+      #     project_id: crane-cloud-274413
+      #     install_components: "gke-gcloud-auth-plugin"
+
+      # - name: Login (Kubernetes Cluster)
+      #   uses: google-github-actions/get-gke-credentials@v1
+      #   with:
+      #     cluster_name: staging-cluster
+      #     location: us-central1-a
+      #     project_id: crane-cloud-274413
 
       - name: Add Repo (cranecloud)
         run: |
