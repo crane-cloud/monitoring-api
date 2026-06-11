@@ -37,6 +37,4 @@ celery:
   create: false
 
 redis:
-  create: true
-mongo:
-  create: true
+  create: false
